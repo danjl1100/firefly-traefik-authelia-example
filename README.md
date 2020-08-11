@@ -16,4 +16,5 @@ Simple testing project for `remote_user_guard` setting in [firefly-iii](https://
     cd firefly-traefik-authelia-example/
     sudo docker-compose up
     ```
-1. View the result at [myserver.com](https://myserver.com/), logging in as user=authelia, pass=authelia.
+1. View the result at [myserver.com](https://myserver.com/), logging in as user `authelia`, pass `authelia`.
+1. Verify at [myserver.com/whoami](https://myserver.com/whoami) that the header `Remote-User: authelia` is being received.
