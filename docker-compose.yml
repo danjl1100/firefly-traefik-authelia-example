@@ -63,10 +63,10 @@ services:
       - redis_authelia
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.authelia.rule=Host(`login.example.com`)"
+      - "traefik.http.routers.authelia.rule=Host(`login.myserver.com`)"
       - "traefik.http.routers.authelia.entrypoints=websecure"
       - "traefik.http.routers.authelia.tls=true"
-      - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://login.example.com/"
+      - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://login.myserver.com/"
       - "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
       - "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups"
     expose:
@@ -80,18 +80,6 @@ services:
       - "./redis_persistence:/data"
     expose:
       - 6379
-
-  # NOTE: needed for the "login.example.com" needed by authelia.
-  dns:
-    restart: always
-    image: strm/dnsmasq
-    volumes:
-      - ./dnsmasq.conf:/etc/dnsmasq.conf
-    ports:
-      - "53:53/udp"
-    cap_add:
-      - NET_ADMIN
-
 
 volumes:
    firefly_iii_export_TEMPORARY:

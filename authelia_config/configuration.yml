@@ -222,7 +222,7 @@ access_control:
 
   rules:
 
-    - domain: example.com
+    - domain: myserver.com
       policy: one_factor
 
 # Configuration of session cookies
@@ -252,7 +252,7 @@ session:
   # The domain to protect.
   # Note: the authenticator must also be in that domain. If empty, the cookie
   # is restricted to the subdomain of the issuer.
-  domain: example.com
+  domain: myserver.com
 
   # The redis connection details
   redis:
