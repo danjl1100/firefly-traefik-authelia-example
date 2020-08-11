@@ -1,0 +1,100 @@
+version: '3.3'
+
+services:
+  whoami:
+    image: "containous/whoami"
+    container_name: "simple-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=PathPrefix(`/whoami`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.middlewares=authelia@docker"
+      - "traefik.http.routers.whoami.tls=true"
+
+  firefly_iii:
+    image: jc5x/firefly-iii:latest
+    volumes:
+      - firefly_iii_export_TEMPORARY:/var/www/firefly-iii/storage/export
+      - firefly_iii_upload_TEMPORARY:/var/www/firefly-iii/storage/upload
+    env_file:
+      - .env
+    depends_on:
+      - firefly_iii_db
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.firefly_iii.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.firefly_iii.entrypoints=websecure"
+      - "traefik.http.routers.firefly_iii.middlewares=authelia@docker"
+      - "traefik.http.routers.firefly_iii.tls=true"
+      - "traefik.http.services.firefly_iii.loadbalancer.server.port=8080"
+
+  firefly_iii_db:
+    image: postgres:10-alpine
+    environment:
+      - POSTGRES_USER=firefly
+      - POSTGRES_PASSWORD=secret_firefly_password
+    volumes:
+      - firefly_iii_db_TEMPORARY:/var/lib/postgresql/data
+
+  traefik:
+    image: "traefik:v2.2.8"
+    container_name: "traefik"
+    depends_on:
+      - "authelia"
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  authelia:
+    image: "authelia/authelia:4.21.0"
+    container_name: "authelia"
+    volumes:
+      - "./authelia_config:/config"
+    depends_on:
+      - redis_authelia
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authelia.rule=Host(`login.example.com`)"
+      - "traefik.http.routers.authelia.entrypoints=websecure"
+      - "traefik.http.routers.authelia.tls=true"
+      - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://login.example.com/"
+      - "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups"
+    expose:
+      - 9091
+    restart: unless-stopped
+    environment:
+      - TZ=America/Chicago
+  redis_authelia:
+    image: "redis:5.0.5"
+    volumes:
+      - "./redis_persistence:/data"
+    expose:
+      - 6379
+
+  # NOTE: needed for the "login.example.com" needed by authelia.
+  dns:
+    restart: always
+    image: strm/dnsmasq
+    volumes:
+      - ./dnsmasq.conf:/etc/dnsmasq.conf
+    ports:
+      - "53:53/udp"
+    cap_add:
+      - NET_ADMIN
+
+
+volumes:
+   firefly_iii_export_TEMPORARY:
+   firefly_iii_upload_TEMPORARY:
+   firefly_iii_db_TEMPORARY:
+

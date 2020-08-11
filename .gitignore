@@ -1,0 +1,3 @@
+redis_persistence/
+authelia_config/db.sqlite3
+authelia_config/notification.txt
