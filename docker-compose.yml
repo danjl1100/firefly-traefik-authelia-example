@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.7'
 
 services:
   whoami:
@@ -12,7 +12,12 @@ services:
       - "traefik.http.routers.whoami.tls=true"
 
   firefly_iii:
-    image: jc5x/firefly-iii:latest
+    build:
+      context: docker/
+      dockerfile: Dockerfile.amd64
+      args:
+        version: 5.4.0-alpha.2
+    #image: jc5x/firefly-iii:latest
     volumes:
       - firefly_iii_export_TEMPORARY:/var/www/firefly-iii/storage/export
       - firefly_iii_upload_TEMPORARY:/var/www/firefly-iii/storage/upload
@@ -23,7 +28,7 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.firefly_iii.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.firefly_iii.rule=Host(`myserver.com`)"
       - "traefik.http.routers.firefly_iii.entrypoints=websecure"
       - "traefik.http.routers.firefly_iii.middlewares=authelia@docker"
       - "traefik.http.routers.firefly_iii.tls=true"
